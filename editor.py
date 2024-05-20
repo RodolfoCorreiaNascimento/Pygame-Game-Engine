@@ -1,12 +1,16 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox, font
 import threading
 import importlib
 import sys
 import os
 from pygments import lex
 from pygments.lexers import PythonLexer
+import MyGame  # Importe MyGame aqui
 import pygame
+
+# Restante do código...
+
 
 class GameObject:
     def __init__(self, name, x=0, y=0, z=0):
@@ -20,7 +24,6 @@ class GameObject:
 
     def get_position(self):
         return self.transform["x"], self.transform["y"], self.transform["z"]
-
 
 class GameEditor(tk.Tk):
     def __init__(self):
@@ -40,7 +43,6 @@ class GameEditor(tk.Tk):
         self.text_editor['yscrollcommand'] = self.scrollbar.set
 
         self.setup_tags()
-
         self.text_editor.bind('<KeyRelease>', self.highlight_syntax)
 
         # Barra de menus
@@ -108,12 +110,25 @@ class GameEditor(tk.Tk):
         self.add_test_objects()
 
     def setup_tags(self):
-        # Configurar as tags para destaque de sintaxe
-        self.text_editor.tag_configure('Token.Keyword', foreground='blue')
-        self.text_editor.tag_configure('Token.Name', foreground='black')
-        self.text_editor.tag_configure('Token.Literal.String', foreground='green')
-        self.text_editor.tag_configure('Token.Comment', foreground='grey')
 
+        tamanho = 10
+        # Configurar fontes
+        comment_font = font.Font(family='Helvetica', size=tamanho, slant='italic', weight='bold')
+        keyword_font = font.Font(family='Helvetica', size=tamanho, weight='bold', slant='italic')
+        string_font = font.Font(family='Helvetica', size=tamanho, weight='bold', slant='italic')
+
+        # Configurar tags
+        self.text_editor.tag_configure('Token.Comment', foreground='grey', font=comment_font)
+        self.text_editor.tag_configure('Token.Keyword', foreground='blue', font=keyword_font)
+        self.text_editor.tag_configure('Token.String', foreground='green', font=string_font)
+        self.text_editor.tag_configure('Token.Number', foreground='purple', font=keyword_font)
+        self.text_editor.tag_configure('Token.Operator', foreground='red', font=keyword_font)
+        self.text_editor.tag_configure('Token.Function', foreground='darkblue', underline=True)
+        self.text_editor.tag_configure('Token.Variable', foreground='darkred', overstrike=True)
+        self.text_editor.tag_configure('Token.Name', foreground='purple', font=keyword_font)
+        self.text_editor.tag_configure('Token.Keyword.Namespace', foreground='red', font=keyword_font)
+        self.text_editor.tag_configure('Token.Keyword.Constant', foreground='red', font=keyword_font)
+        
     def open_file(self):
         file_path = filedialog.askopenfilename(defaultextension='.py', filetypes=[('Python Files', '*.py')])
         if file_path:
@@ -138,19 +153,35 @@ class GameEditor(tk.Tk):
         if self.game_thread is None or not self.game_thread.is_alive():
             self.game_thread = threading.Thread(target=self.run_game)
             self.game_thread.start()
+        elif self.game_instance is None:
+            self.run_game()
 
     def run_game(self):
         if 'MyGame' in sys.modules:
-            importlib.reload(sys.modules['MyGame'])
+            MyGame = importlib.reload(sys.modules['MyGame'])
         else:
             import MyGame
-        MyGame.main()
+
+        # Instanciar uma nova instância da classe MyGame
+        self.game_instance = MyGame.MyGame(300, 480)
+
+        # Executar o jogo
+        self.game_instance.main()
 
     def reload_game_code(self):
-        if self.game_instance:
-            self.save_file()
-            importlib.reload(sys.modules['MyGame'])
-            messagebox.showinfo('Info', 'Game code reloaded successfully')
+        if self.game_thread is not None and self.game_thread.is_alive():
+            # Parar o thread do jogo
+            self.game_instance.running = False
+            self.game_thread.join()
+
+        self.save_file()
+        importlib.reload(sys.modules['MyGame'])
+
+        # Reiniciar o jogo
+        self.start_game()
+
+        messagebox.showinfo('Info', 'Game code reloaded successfully')
+
 
     def highlight_syntax(self, event=None):
         code = self.text_editor.get('1.0', tk.END)
@@ -203,3 +234,4 @@ class GameEditor(tk.Tk):
 if __name__ == '__main__':
     editor = GameEditor()
     editor.mainloop()
+
