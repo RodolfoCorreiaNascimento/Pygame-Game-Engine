@@ -1,30 +1,35 @@
-from game import GameEngine
-import engine
+from engine import GameEngine
+import pygame
 
-# definir cores
-red   = (255, 0, 0)
+# Definir cores
+red = (255, 0, 0)
 green = (0, 255, 0)
-blue  = (0, 0, 255)
+blue = (0, 0, 255)
 
 class MyGame(GameEngine):
     def __init__(self, width, height):
         super().__init__(width, height)
-        # Inicialize os elementos do jogo aqui
-	
+        self.x = 30  # Inicializa como atributo de instância
+        self.y = 30  # Inicializa como atributo de instância
+
     def update(self):
-        # Atualize a lógica do jogo específico aqui
         super().update()
+        self.x += 1  # Atualize a posição do jogador
+        self.y += 1
 
     def render(self):
         super().render()
-        # Renderize os elementos do jogo específico aqui
-        self.screen.fill(red)  # Usando a cor RGB para azul
-        engine.pygame.draw.rect(self.screen, (green), (40, 50, 70, 80))
-        engine.pygame.display.flip()  # Atualiza a tela
-	
+        self.screen.fill(red)  # Usando a cor vermelha
+        pygame.draw.rect(self.screen, blue, (self.x, self.y, 70, 80))  # Desenha um retângulo verde
+        pygame.display.flip()  # Atualiza a tela
+
 def main():
     game = MyGame(300, 480)
     game.run()
+
+if __name__ == "__main__":
+    main()
+
 
 
 
