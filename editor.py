@@ -163,6 +163,7 @@ class GameEditor(tk.Tk):
         try:
             if self.game_thread is None or not self.game_thread.is_alive():
                 logging.info("Starting game thread")
+                # Inicia ou reinicia a thread do jogo
                 self.game_thread = threading.Thread(target=self.run_game)
                 self.game_thread.start()
             else:
@@ -186,16 +187,21 @@ class GameEditor(tk.Tk):
     def reload_game_code(self):
         try:
             if self.game_instance:
-                self.save_file()
+                self.save_file()  # Salva o estado do jogo
+                # Recarrega o módulo do jogo
                 importlib.reload(sys.modules['MyGame'])
-                messagebox.showinfo('Info', 'Game code reloaded successfully')
+                # Reinicia o jogo chamando o método de inicialização novamente
+                self.run_game()
+                # Exibe uma mensagem de informação se o recarregamento for bem-sucedido
+                messagebox.showinfo('Info', 'Game restarted successfully')
         except Exception as e:
-            messagebox.showerror("Error", f"Error while reloading game code: {e}")
+            # Exibe uma mensagem de erro se ocorrer algum problema durante o recarregamento
+            messagebox.showerror("Error", f"Error while restarting game: {e}")
     
     def quit(self):
         # Aqui você pode adicionar qualquer lógica personalizada que deseja executar antes de sair
         self.destroy()  # Chama o método destroy() para fechar a janela principal
-        self.sys.exit()
+        sys.exit()
 
 
     def highlight_syntax(self, event=None):
