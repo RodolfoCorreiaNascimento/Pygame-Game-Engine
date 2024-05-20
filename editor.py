@@ -6,7 +6,6 @@ import sys
 import os
 from pygments import lex
 from pygments.lexers import PythonLexer
-from pygame import Surface  # Importe a classe Surface do pygame
 import pygame
 
 class GameObject:
