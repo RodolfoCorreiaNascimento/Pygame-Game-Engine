@@ -20,7 +20,7 @@ class MyGame(GameEngine):
     def render(self):
         super().render()
         self.screen.fill(red)  # Usando a cor vermelha
-        pygame.draw.rect(self.screen, green, (self.x, self.y, 70, 80))  # Desenha um retângulo verde
+        pygame.draw.rect(self.screen, blue, (self.x, self.y, 70, 80))  # Desenha um retângulo verde
         pygame.display.flip()  # Atualiza a tela
 
 def main():
@@ -29,6 +29,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 

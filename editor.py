@@ -6,6 +6,7 @@ import sys
 import os
 from pygments import lex
 from pygments.lexers import PythonLexer
+import logging
 import pygame
 
 class GameObject:
@@ -77,9 +78,12 @@ class GameEditor(tk.Tk):
         self.embed_frame.pack(side='right', expand=1, fill='both')
 
         os.environ['SDL_WINDOWID'] = str(self.embed_frame.winfo_id())
-        pygame.display.init()
-        self.screen = pygame.display.set_mode((600, 400))
-        pygame.display.update()
+        try:
+            pygame.display.init()
+            self.screen = pygame.display.set_mode((600, 400))
+            pygame.display.update()
+        except pygame.error as e:
+            messagebox.showerror("Error", f"Pygame initialization error: {e}")
 
         # Gerenciamento de objetos do jogo
         self.objects_frame = tk.Frame(self)
@@ -127,91 +131,137 @@ class GameEditor(tk.Tk):
         self.text_editor.tag_configure('Token.Keyword.Constant', foreground='red', font=keyword_font)
 
     def open_file(self):
-        file_path = filedialog.askopenfilename(defaultextension='.py', filetypes=[('Python Files', '*.py')])
-        if file_path:
-            self.file_path = file_path
-            self.load_file()
+        try:
+            file_path = filedialog.askopenfilename(defaultextension='.py', filetypes=[('Python Files', '*.py')])
+            if file_path:
+                self.file_path = file_path
+                self.load_file()
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while opening file: {e}")
 
     def save_file(self):
-        if self.file_path:
-            with open(self.file_path, 'w') as file:
-                code = self.text_editor.get('1.0', tk.END)
-                file.write(code)
+        try:
+            if self.file_path:
+                with open(self.file_path, 'w') as file:
+                    code = self.text_editor.get('1.0', tk.END)
+                    file.write(code)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while saving file: {e}")
 
     def load_file(self):
-        if self.file_path:
-            with open(self.file_path, 'r') as file:
-                code = file.read()
-                self.text_editor.delete('1.0', tk.END)
-                self.text_editor.insert('1.0', code)
-            self.highlight_syntax()
+        try:
+            if self.file_path:
+                with open(self.file_path, 'r') as file:
+                    code = file.read()
+                    self.text_editor.delete('1.0', tk.END)
+                    self.text_editor.insert('1.0', code)
+                self.highlight_syntax()
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while loading file: {e}")
 
     def start_game(self):
-        if self.game_thread is None or not self.game_thread.is_alive():
-            self.game_thread = threading.Thread(target=self.run_game)
-            self.game_thread.start()
+        try:
+            if self.game_thread is None or not self.game_thread.is_alive():
+                logging.info("Starting game thread")
+                self.game_thread = threading.Thread(target=self.run_game)
+                self.game_thread.start()
+            else:
+                logging.info("Game thread already running")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while starting the game: {e}")
 
     def run_game(self):
-        if 'MyGame' in sys.modules:
-            importlib.reload(sys.modules['MyGame'])
-        else:
-            import MyGame
-        MyGame.main()
+        try:
+            if 'MyGame' in sys.modules:
+                logging.info("Reloading MyGame module")
+                importlib.reload(sys.modules['MyGame'])
+            else:
+                logging.info("Importing MyGame module")
+                import MyGame
+            logging.info("Running MyGame.main()")
+            MyGame.main()
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while running the game: {e}")
 
     def reload_game_code(self):
-        if self.game_instance:
-            self.save_file()
-            importlib.reload(sys.modules['MyGame'])
-            messagebox.showinfo('Info', 'Game code reloaded successfully')
+        try:
+            if self.game_instance:
+                self.save_file()
+                importlib.reload(sys.modules['MyGame'])
+                messagebox.showinfo('Info', 'Game code reloaded successfully')
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while reloading game code: {e}")
+    
+    def quit(self):
+        # Aqui você pode adicionar qualquer lógica personalizada que deseja executar antes de sair
+        self.destroy()  # Chama o método destroy() para fechar a janela principal
+        self.sys.exit()
+
 
     def highlight_syntax(self, event=None):
-        code = self.text_editor.get('1.0', tk.END)
-        self.text_editor.mark_set('range_start', '1.0')
-        data = self.text_editor.get('1.0', 'end-1c')
-        for token, content in lex(data, PythonLexer()):
-            self.text_editor.mark_set('range_end', 'range_start + %dc' % len(content))
-            self.text_editor.tag_add(str(token), 'range_start', 'range_end')
-            self.text_editor.mark_set('range_start', 'range_end')
+        try:
+            code = self.text_editor.get('1.0', tk.END)
+            self.text_editor.mark_set('range_start', '1.0')
+            data = self.text_editor.get('1.0', 'end-1c')
+            for token, content in lex(data, PythonLexer()):
+                self.text_editor.mark_set('range_end', 'range_start + %dc' % len(content))
+                self.text_editor.tag_add(str(token), 'range_start', 'range_end')
+                self.text_editor.mark_set('range_start', 'range_end')
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while highlighting syntax: {e}")
 
     def add_object(self):
-        new_object_name = "NewObject"  # Nome padrão para um novo objeto
-        self.objects_list.insert(tk.END, new_object_name)
+        try:
+            new_object_name = "NewObject"  # Nome padrão para um novo objeto
+            self.objects_list.insert(tk.END, new_object_name)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while adding object: {e}")
 
     def on_object_select(self, event):
-        selected_index = self.objects_list.curselection()
-        if selected_index:
-            index = int(selected_index[0])
-            selected_object = self.objects_list.get(index)
-            self.update_inspector(selected_object)
+        try:
+            selected_index = self.objects_list.curselection()
+            if selected_index:
+                index = int(selected_index[0])
+                selected_object = self.objects_list.get(index)
+                self.update_inspector(selected_object)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while selecting object: {e}")
 
     def update_inspector(self, object_name):
-        # Limpa a lista de propriedades
-        self.properties_list.delete(0, tk.END)
-        
-        # Procura pelo objeto na lista de objetos
-        # Aqui você pode ter uma lista de objetos
-        # Ou pode buscar em um dicionário onde a chave é o nome do objeto
-        # e o valor é o objeto em si.
-        # Por simplicidade, vou supor que você tenha uma lista
-        # de objetos onde cada objeto é uma instância da classe GameObject.
-        for obj in self.game_objects:
-            if obj.name == object_name:
-                # Adiciona as propriedades do objeto à lista de propriedades
-                for prop, val in obj.transform.items():
-                    self.properties_list.insert(tk.END, f"{prop}: {val}")
+        try:
+            # Limpa a lista de propriedades
+            self.properties_list.delete(0, tk.END)
+
+            # Procura pelo objeto na lista de objetos
+            # Aqui você pode ter uma lista de objetos
+            # Ou pode buscar em um dicionário onde a chave é o nome do objeto
+            # e o valor é o objeto em si.
+            # Por simplicidade, vou supor que você tenha uma lista
+            # de objetos onde cada objeto é uma instância da classe GameObject.
+            for obj in self.game_objects:
+                if obj.name == object_name:
+                    # Adiciona as propriedades do objeto à lista de propriedades
+                    for prop, val in obj.transform.items():
+                        self.properties_list.insert(tk.END, f"{prop}: {val}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while updating inspector: {e}")
 
     def add_test_objects(self):
-        # Cria alguns objetos de teste
-        self.game_objects = [
-            GameObject("Cube", x=10, y=20, z=30),
-            GameObject("Sphere", x=50, y=60, z=70),
-            GameObject("Player", x=100, y=110, z=120)
-        ]
+        try:
+            # Cria alguns objetos de teste
+            self.game_objects = [
+                GameObject("Cube", x=10, y=20, z=30),
+                GameObject("Sphere", x=50, y=60, z=70),
+                GameObject("Player", x=100, y=110, z=120)
+            ]
 
-        # Adiciona os nomes dos objetos à lista de objetos na interface
-        for obj in self.game_objects:
-            self.objects_list.insert(tk.END, obj.name)
+            # Adiciona os nomes dos objetos à lista de objetos na interface
+            for obj in self.game_objects:
+                self.objects_list.insert(tk.END, obj.name)
+        except Exception as e:
+            messagebox.showerror("Error", f"Error while adding test objects: {e}")
 
 if __name__ == '__main__':
     editor = GameEditor()
     editor.mainloop()
+
