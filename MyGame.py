@@ -24,8 +24,8 @@ class MyGame(GameEngine):
         pygame.display.flip()  # Atualiza a tela
 
 def main():
-    game_instance = MyGame.MyGame(300, 480)
-    game_instance.run()
+    game = MyGame(300, 480)
+    game.run()
 
 if __name__ == "__main__":
     main()
